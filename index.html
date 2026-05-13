@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>仙女楼</title>
+    <title>超维到账中枢</title>
     <style>
       :root {
         color-scheme: dark;
@@ -420,7 +420,7 @@
         padding: 14px;
         overflow: hidden;
         display: grid;
-        grid-template-rows: minmax(220px, 0.95fr) minmax(220px, 1.05fr);
+        grid-template-rows: minmax(150px, 0.7fr) minmax(220px, 1fr) minmax(180px, 0.8fr);
         gap: 12px;
       }
 
@@ -501,6 +501,36 @@
       .f-stat span {
         display: block;
         margin-top: 7px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .bonus-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 4px 10px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(255, 211, 111, 0.18);
+        border-radius: 14px;
+        padding: 10px 12px;
+        background:
+          radial-gradient(circle at 0 0, rgba(255, 211, 111, 0.14), transparent 44%),
+          rgba(255, 255, 255, 0.04);
+      }
+
+      .bonus-row strong {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-size: 17px;
+      }
+
+      .bonus-row b {
+        color: var(--gold);
+        font-size: 22px;
+      }
+
+      .bonus-row span {
+        grid-column: 1 / -1;
         color: var(--muted);
         font-size: 12px;
       }
@@ -838,12 +868,18 @@
                 <b id="lastCheck">-</b>
               </div>
               <div class="stat">
-                <span>总人数</span>
+                <span>I列总数</span>
                 <b id="iTotal">0</b>
               </div>
             </div>
           </div>
           <div class="feed">
+            <section class="feed-section">
+              <h3 class="section-title">奖金累计</h3>
+              <div id="bonusBoard">
+                <div class="empty">等待打赏入账</div>
+              </div>
+            </section>
             <section class="feed-section">
               <h3 class="section-title">屠龙榜</h3>
               <div id="fSummary">
@@ -869,12 +905,14 @@
       const API_URL = APPS_SCRIPT_URL || "/api/sheet";
       const STORAGE_KEY = "sheet-i-column-baseline-hypercore-v2";
       const LOG_KEY = "sheet-i-column-increase-log-hypercore-v3";
+      const BONUS_KEY = "sheet-bonus-totals-v1";
 
       const state = {
         running: true,
         timer: null,
         baseline: loadJson(STORAGE_KEY, null),
         events: loadJson(LOG_KEY, []),
+        bonusTotals: loadJson(BONUS_KEY, {}),
         rows: [],
         openFStats: loadJson("sheet-open-f-stats-v1", []),
         renderingFSummary: false,
@@ -905,6 +943,7 @@
         eventCount: document.getElementById("eventCount"),
         lastCheck: document.getElementById("lastCheck"),
         iTotal: document.getElementById("iTotal"),
+        bonusBoard: document.getElementById("bonusBoard"),
         fSummary: document.getElementById("fSummary"),
         feed: document.getElementById("feed"),
         deck: document.getElementById("deck"),
@@ -944,6 +983,7 @@
 
       renderFeed();
       renderStats();
+      renderBonusBoard();
       startTimer();
       checkSheet();
 
@@ -1087,6 +1127,7 @@
         beep();
 
         if (options.persist) {
+          addBonus(title, reward);
           state.events.unshift({
             id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
             time: new Date().toISOString(),
@@ -1101,6 +1142,7 @@
           renderFeed();
           renderStats();
           renderFSummary();
+          renderBonusBoard();
         }
       }
 
@@ -1129,6 +1171,42 @@
         els.iTotal.textContent = state.rows
           .reduce((sum, row) => sum + row.iNumber, 0)
           .toLocaleString("zh-CN");
+      }
+
+      function addBonus(name, reward) {
+        const current = state.bonusTotals[name] || { total: 0, count: 0 };
+        current.total += reward;
+        current.count += 1;
+        state.bonusTotals[name] = current;
+        saveJson(BONUS_KEY, state.bonusTotals);
+      }
+
+      function renderBonusBoard() {
+        const items = Object.entries(state.bonusTotals)
+          .map(([name, value]) => ({
+            name,
+            total: Number(value?.total || 0),
+            count: Number(value?.count || 0),
+          }))
+          .filter((item) => item.total > 0)
+          .sort((a, b) => b.total - a.total);
+
+        if (!items.length) {
+          els.bonusBoard.innerHTML = `<div class="empty">等待打赏入账</div>`;
+          return;
+        }
+
+        els.bonusBoard.innerHTML = items
+          .map(
+            (item) => `
+              <article class="bonus-row">
+                <strong>${escapeHtml(item.name)}</strong>
+                <b>${item.total.toLocaleString("zh-CN")}</b>
+                <span>${item.count.toLocaleString("zh-CN")} 次打赏 · 美金累计</span>
+              </article>
+            `,
+          )
+          .join("");
       }
 
       function renderFSummary() {
