@@ -420,13 +420,18 @@
         padding: 14px;
         overflow: hidden;
         display: grid;
-        grid-template-rows: minmax(150px, 0.7fr) minmax(220px, 1fr) minmax(180px, 0.8fr);
+        grid-template-rows: 190px minmax(260px, 1fr) 240px;
         gap: 12px;
+        min-height: 0;
       }
 
       .feed-section {
         min-height: 0;
         overflow: auto;
+      }
+
+      .feed-section.bonus-section {
+        max-height: 190px;
       }
 
       .section-title {
@@ -509,10 +514,10 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 4px 10px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         border: 1px solid rgba(255, 211, 111, 0.18);
         border-radius: 14px;
-        padding: 10px 12px;
+        padding: 8px 10px;
         background:
           radial-gradient(circle at 0 0, rgba(255, 211, 111, 0.14), transparent 44%),
           rgba(255, 255, 255, 0.04);
@@ -521,12 +526,12 @@
       .bonus-row strong {
         min-width: 0;
         overflow-wrap: anywhere;
-        font-size: 17px;
+        font-size: 15px;
       }
 
       .bonus-row b {
         color: var(--gold);
-        font-size: 22px;
+        font-size: 19px;
       }
 
       .bonus-row span {
@@ -874,7 +879,7 @@
             </div>
           </div>
           <div class="feed">
-            <section class="feed-section">
+            <section class="feed-section bonus-section">
               <h3 class="section-title">奖金累计</h3>
               <div id="bonusBoard">
                 <div class="empty">等待打赏入账</div>
@@ -905,7 +910,7 @@
       const API_URL = APPS_SCRIPT_URL || "/api/sheet";
       const STORAGE_KEY = "sheet-i-column-baseline-hypercore-v2";
       const LOG_KEY = "sheet-i-column-increase-log-hypercore-v3";
-      const BONUS_KEY = "sheet-bonus-totals-v1";
+      const BONUS_KEY = "sheet-bonus-totals-by-f-v1";
 
       const state = {
         running: true,
@@ -1106,6 +1111,7 @@
 
       function announce(event, options = { persist: true }) {
         const title = event.displayName || event.operator || "未知";
+        const bonusName = event.operator || "未填写F列";
         const increase = event.after - event.before;
         const reward = randomReward();
         const persona = event.persona || "神秘人设";
@@ -1127,7 +1133,7 @@
         beep();
 
         if (options.persist) {
-          addBonus(title, reward);
+          addBonus(bonusName, reward);
           state.events.unshift({
             id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
             time: new Date().toISOString(),
