@@ -1,0 +1,1557 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>超维到账中枢</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #02030a;
+        --ink: #f7fbff;
+        --muted: #8fa7bd;
+        --cyan: #35eaff;
+        --blue: #6f7dff;
+        --violet: #b55cff;
+        --green: #2dffb2;
+        --gold: #ffd36f;
+        --glass: rgba(4, 9, 22, 0.58);
+        --line: rgba(82, 235, 255, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+        background: var(--bg);
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 260vh;
+        background:
+          radial-gradient(circle at 28% 16%, rgba(53, 234, 255, 0.16), transparent 32%),
+          radial-gradient(circle at 76% 24%, rgba(181, 92, 255, 0.15), transparent 30%),
+          linear-gradient(180deg, #030511 0%, #050919 45%, #02030a 100%);
+        color: var(--ink);
+        font-family:
+          "Microsoft YaHei", "Segoe UI", Inter, system-ui, -apple-system,
+          sans-serif;
+        overflow-x: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      #threeCanvas,
+      #particleCanvas {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+
+      #threeCanvas {
+        z-index: 0;
+      }
+
+      #particleCanvas {
+        z-index: 1;
+        pointer-events: none;
+        mix-blend-mode: screen;
+      }
+
+      .scan {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background:
+          repeating-linear-gradient(
+            90deg,
+            rgba(53, 234, 255, 0.036) 0 1px,
+            transparent 1px 112px
+          ),
+          repeating-linear-gradient(
+            180deg,
+            rgba(53, 234, 255, 0.026) 0 1px,
+            transparent 1px 78px
+          ),
+          radial-gradient(circle at center, transparent 0 48%, rgba(0, 0, 0, 0.62));
+      }
+
+      .float-reward {
+        position: fixed;
+        left: 50%;
+        top: 18%;
+        z-index: 12;
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        max-width: min(88vw, 1120px);
+        padding: 18px 26px;
+        border: 1px solid rgba(255, 211, 111, 0.34);
+        border-radius: 24px;
+        background:
+          radial-gradient(circle at 18% 20%, rgba(255, 211, 111, 0.26), transparent 38%),
+          linear-gradient(90deg, rgba(7, 8, 20, 0.94), rgba(29, 14, 34, 0.82));
+        color: var(--gold);
+        font-weight: 950;
+        line-height: 0.92;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transform: translate3d(62vw, -42px, 0) rotate(4deg) scale(0.84);
+        text-shadow:
+          0 0 14px rgba(255, 211, 111, 0.8),
+          0 0 46px rgba(255, 211, 111, 0.44),
+          0 0 90px rgba(181, 92, 255, 0.32);
+        box-shadow:
+          0 22px 70px rgba(0, 0, 0, 0.36),
+          inset 0 0 34px rgba(255, 211, 111, 0.08);
+      }
+
+      .float-reward.show {
+        animation: rewardFloat 4.8s cubic-bezier(0.16, 0.9, 0.24, 1) forwards;
+      }
+
+      .float-reward .prefix {
+        font-size: clamp(30px, 4vw, 64px);
+      }
+
+      .float-reward .amount {
+        font-size: clamp(76px, 9vw, 150px);
+      }
+
+      .float-reward .suffix {
+        font-size: clamp(34px, 4.5vw, 72px);
+      }
+
+      .page {
+        position: relative;
+        z-index: 3;
+      }
+
+      .hero {
+        position: sticky;
+        top: 0;
+        min-height: 100vh;
+        padding: 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 22px;
+        overflow: hidden;
+      }
+
+      .deck,
+      .side {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background:
+          linear-gradient(135deg, rgba(53, 234, 255, 0.08), transparent 32%),
+          linear-gradient(315deg, rgba(181, 92, 255, 0.08), transparent 38%),
+          rgba(4, 9, 22, 0.18);
+        box-shadow:
+          0 28px 90px rgba(0, 0, 0, 0.48),
+          inset 0 0 80px rgba(53, 234, 255, 0.035);
+      }
+
+      .side {
+        background:
+          linear-gradient(135deg, rgba(53, 234, 255, 0.08), transparent 32%),
+          linear-gradient(315deg, rgba(181, 92, 255, 0.08), transparent 38%),
+          rgba(4, 9, 22, 0.9);
+      }
+
+      .deck {
+        position: relative;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .deck::before {
+        content: "";
+        position: absolute;
+        inset: -30%;
+        background: conic-gradient(
+          from 180deg,
+          transparent,
+          rgba(53, 234, 255, 0.14),
+          transparent,
+          rgba(255, 211, 111, 0.11),
+          transparent,
+          rgba(181, 92, 255, 0.13),
+          transparent
+        );
+        animation: haloSpin 22s linear infinite;
+        opacity: 0.74;
+      }
+
+      .deck-inner {
+        position: relative;
+        height: 100%;
+        min-height: calc(100vh - 56px);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        padding: 28px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .eyebrow {
+        display: block;
+        color: var(--cyan);
+        font-size: 12px;
+        letter-spacing: 0.28em;
+        text-shadow: 0 0 18px rgba(53, 234, 255, 0.72);
+      }
+
+      h1 {
+        margin: 9px 0 0;
+        max-width: 760px;
+        font-size: clamp(34px, 5.4vw, 86px);
+        line-height: 0.92;
+        letter-spacing: 0;
+        text-shadow:
+          0 0 12px rgba(255, 255, 255, 0.48),
+          0 0 38px rgba(53, 234, 255, 0.42),
+          0 0 86px rgba(111, 125, 255, 0.28);
+        animation: floatTitle 5.8s ease-in-out infinite;
+      }
+
+      .controls {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        padding: 8px;
+        border: 1px solid rgba(53, 234, 255, 0.24);
+        border-radius: 16px;
+        background: rgba(0, 5, 16, 0.66);
+        pointer-events: auto;
+      }
+
+      input,
+      button {
+        height: 36px;
+        border: 1px solid rgba(53, 234, 255, 0.28);
+        border-radius: 12px;
+        background: rgba(53, 234, 255, 0.07);
+        color: var(--ink);
+      }
+
+      input {
+        width: 54px;
+        text-align: center;
+      }
+
+      button {
+        padding: 0 13px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: rgba(53, 234, 255, 0.85);
+        box-shadow: 0 0 28px rgba(53, 234, 255, 0.28);
+      }
+
+      .signal {
+        position: fixed;
+        left: 56px;
+        bottom: 42px;
+        z-index: 8;
+        width: min(760px, calc(100vw - 480px));
+        display: grid;
+        justify-items: start;
+        gap: 12px;
+        text-align: left;
+        transform-style: preserve-3d;
+        padding: 18px 20px;
+        border: 1px solid rgba(53, 234, 255, 0.16);
+        border-radius: 20px;
+        background: linear-gradient(90deg, rgba(2, 7, 18, 0.94), rgba(2, 7, 18, 0.72));
+        box-shadow:
+          0 18px 46px rgba(0, 0, 0, 0.32),
+          inset 0 0 34px rgba(53, 234, 255, 0.04);
+        animation: floatHud 4.6s ease-in-out infinite;
+      }
+
+      .kicker {
+        color: var(--muted);
+        font-size: 13px;
+        letter-spacing: 0.32em;
+      }
+
+      .name {
+        font-size: clamp(52px, 7.2vw, 112px);
+        font-weight: 950;
+        line-height: 0.9;
+        letter-spacing: 0;
+        text-shadow:
+          0 0 10px rgba(255, 255, 255, 0.78),
+          0 0 34px rgba(53, 234, 255, 0.7),
+          0 0 92px rgba(53, 234, 255, 0.42);
+        animation: floatName 4.2s ease-in-out infinite;
+      }
+
+      .pay {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        color: var(--gold);
+        font-size: clamp(28px, 3.6vw, 54px);
+        font-weight: 900;
+        line-height: 0.95;
+        text-shadow:
+          0 0 14px rgba(255, 211, 111, 0.72),
+          0 0 56px rgba(181, 92, 255, 0.36);
+        animation: floatPay 4.2s ease-in-out infinite 0.25s;
+      }
+
+      .pay .amount {
+        font-size: clamp(34px, 4.4vw, 68px);
+      }
+
+      .pay .unit {
+        font-size: clamp(34px, 4.4vw, 68px);
+      }
+
+      .delta {
+        color: var(--green);
+        min-height: 28px;
+        font-size: clamp(18px, 2vw, 28px);
+        line-height: 1.35;
+        text-shadow: 0 0 18px rgba(45, 255, 178, 0.52);
+      }
+
+      .gesture {
+        position: absolute;
+        right: 28px;
+        bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.1em;
+      }
+
+      .side {
+        min-width: 0;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        overflow: hidden;
+        animation: floatSide 6.2s ease-in-out infinite;
+      }
+
+      .side-head {
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .side-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .side-title strong {
+        font-size: 20px;
+      }
+
+      .live {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--green);
+        font-size: 13px;
+      }
+
+      .live::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 18px currentColor;
+        animation: blink 1.4s ease-in-out infinite;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .stat {
+        min-height: 76px;
+        border: 1px solid rgba(53, 234, 255, 0.16);
+        border-radius: 16px;
+        padding: 11px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .stat b {
+        display: block;
+        margin-top: 9px;
+        font-size: 23px;
+      }
+
+      .feed {
+        padding: 14px;
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: minmax(220px, 0.95fr) minmax(220px, 1.05fr);
+        gap: 12px;
+      }
+
+      .feed-section {
+        min-height: 0;
+        overflow: auto;
+      }
+
+      .section-title {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        margin: 0 0 10px;
+        padding: 4px 0 8px;
+        background: linear-gradient(180deg, rgba(4, 9, 22, 0.96), rgba(4, 9, 22, 0.72));
+        color: var(--cyan);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+      }
+
+      .f-stat {
+        position: relative;
+        margin-bottom: 10px;
+        border: 1px solid rgba(53, 234, 255, 0.18);
+        border-radius: 14px;
+        padding: 11px 12px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .f-stat strong {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      .f-stat strong b {
+        color: var(--gold);
+        font-size: 22px;
+      }
+
+      .bar {
+        height: 5px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .bar i {
+        display: block;
+        width: var(--pct);
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--green), var(--cyan), var(--gold));
+        box-shadow: 0 0 16px rgba(53, 234, 255, 0.48);
+      }
+
+      .f-stat span {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .event {
+        position: relative;
+        margin-bottom: 12px;
+        border: 1px solid rgba(53, 234, 255, 0.2);
+        border-radius: 16px;
+        padding: 14px;
+        background:
+          radial-gradient(circle at 0 0, rgba(45, 255, 178, 0.18), transparent 45%),
+          rgba(255, 255, 255, 0.045);
+        transform: translateZ(0);
+        animation: floatEvent 5.4s ease-in-out infinite;
+      }
+
+      .event:nth-child(2n) {
+        animation-delay: 0.45s;
+      }
+
+      .event:nth-child(3n) {
+        animation-delay: 0.9s;
+      }
+
+      .event::before {
+        content: "";
+        position: absolute;
+        inset: -1px auto -1px -1px;
+        width: 4px;
+        border-radius: 16px 0 0 16px;
+        background: var(--green);
+        box-shadow: 0 0 24px var(--green);
+      }
+
+      .event strong {
+        display: block;
+        font-size: 22px;
+        margin-bottom: 5px;
+      }
+
+      .event b {
+        display: block;
+        color: var(--gold);
+        margin-bottom: 5px;
+      }
+
+      .event span,
+      .empty {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .empty {
+        display: grid;
+        place-items: center;
+        min-height: 240px;
+        text-align: center;
+      }
+
+      .panel-strip {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 48px 28px;
+      }
+
+      .deep-panel {
+        width: min(980px, calc(100vw - 56px));
+        border: 1px solid rgba(53, 234, 255, 0.16);
+        border-radius: 24px;
+        padding: 28px;
+        background: rgba(4, 9, 22, 0.86);
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+      }
+
+      .deep-panel h2 {
+        margin: 0 0 12px;
+        font-size: clamp(28px, 4vw, 52px);
+      }
+
+      .deep-panel p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .impact {
+        animation: impact 980ms ease-out;
+      }
+
+      @keyframes haloSpin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0.35;
+          transform: scale(1.45);
+        }
+      }
+
+      @keyframes impact {
+        0% {
+          transform: scale(0.88) translateZ(80px);
+          filter: brightness(2.1);
+        }
+        46% {
+          transform: scale(1.1) translateZ(110px);
+        }
+        100% {
+          transform: scale(1) translateZ(0);
+          filter: brightness(1);
+        }
+      }
+
+      @keyframes floatTitle {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+        50% {
+          transform: translate3d(0, -8px, 0);
+        }
+      }
+
+      @keyframes floatHud {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+        50% {
+          transform: translate3d(0, -10px, 0);
+        }
+      }
+
+      @keyframes floatName {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+        50% {
+          transform: translate3d(0, -6px, 0);
+        }
+      }
+
+      @keyframes floatPay {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+        50% {
+          transform: translate3d(0, 5px, 0);
+        }
+      }
+
+      @keyframes floatSide {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+        50% {
+          transform: translate3d(0, -6px, 0);
+        }
+      }
+
+      @keyframes floatEvent {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+        50% {
+          transform: translate3d(0, -4px, 0);
+        }
+      }
+
+      @keyframes rewardFloat {
+        0% {
+          opacity: 0;
+          transform: translate3d(62vw, -42px, 0) rotate(4deg) scale(0.84);
+        }
+        14% {
+          opacity: 1;
+          transform: translate3d(-50%, 0, 0) rotate(-1deg) scale(1.08);
+        }
+        24% {
+          transform: translate3d(-50%, 10px, 0) rotate(0deg) scale(1);
+        }
+        70% {
+          opacity: 1;
+          transform: translate3d(-50%, 18px, 0) rotate(0deg) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translate3d(-128vw, -16px, 0) rotate(-5deg) scale(0.92);
+        }
+      }
+
+      @media (max-width: 980px) {
+        body {
+          min-height: auto;
+          overflow: auto;
+        }
+
+        .hero {
+          position: relative;
+          grid-template-columns: 1fr;
+          min-height: auto;
+          padding: 14px;
+        }
+
+        .deck-inner {
+          min-height: 680px;
+          padding: 18px;
+        }
+
+        .topbar {
+          flex-direction: column;
+        }
+
+        .side {
+          min-height: 440px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="threeCanvas"></canvas>
+    <canvas id="particleCanvas"></canvas>
+    <div class="scan"></div>
+    <div id="floatReward" class="float-reward" aria-live="polite"></div>
+
+    <main class="page">
+      <section class="hero" id="hero">
+        <div class="deck" id="deck">
+          <div class="deck-inner">
+            <div class="topbar">
+              <div>
+                <span class="eyebrow">HYPERDIMENSIONAL PAY CORE</span>
+                <h1>kuku发财~</h1>
+              </div>
+              <div class="controls">
+                <input id="intervalInput" type="number" min="1" step="1" value="2" />
+                <button id="toggleBtn">暂停</button>
+                <button id="resetBtn">重置基准</button>
+                <button id="demoBtn">交互测试</button>
+              </div>
+            </div>
+
+            <div id="signal" class="signal">
+              <div class="kicker"></div>
+              <div id="name" class="name">待命中</div>
+              <div id="pay" class="pay">统计画面待命中</div>
+              <div id="delta" class="delta">只在 D 列和 I 列都有值，并且 I 列增加时爆炸播报</div>
+            </div>
+
+            <div class="gesture">
+              <span>SCROLL PARALLAX</span>
+              <span>3D MODEL</span>
+              <span>PARTICLE IMPACT</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="side">
+          <div class="side-head">
+            <div class="side-title">
+              <strong>新增信号</strong>
+              <span id="liveState" class="live">监控中</span>
+            </div>
+            <div class="stats">
+              <div class="stat">
+                <span>监控行数</span>
+                <b id="rowCount">0</b>
+              </div>
+              <div class="stat">
+                <span>记录数</span>
+                <b id="eventCount">0</b>
+              </div>
+              <div class="stat">
+                <span>最近检查</span>
+                <b id="lastCheck">-</b>
+              </div>
+              <div class="stat">
+                <span>I列总数</span>
+                <b id="iTotal">0</b>
+              </div>
+            </div>
+          </div>
+          <div class="feed">
+            <section class="feed-section">
+              <h3 class="section-title">屠龙榜</h3>
+              <div id="fSummary">
+                <div class="empty">等待统计数据</div>
+              </div>
+            </section>
+            <section class="feed-section">
+              <h3 class="section-title">新增信号</h3>
+              <div id="feed">
+                <div class="empty">等待超维信号</div>
+              </div>
+            </section>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel-strip">
+        <div class="deep-panel" data-depth="0.28">
+          <h2>滚动视差层</h2>
+          <p>向下滚动时，背景粒子、3D 中枢、信息面板会以不同速度移动。鼠标移动会改变核心模型的朝向和粒子流方向。</p>
+        </div>
+      </section>
+
+      <section class="panel-strip">
+        <div class="deep-panel" data-depth="0.45">
+          <h2>到账冲击态</h2>
+          <p>I 列增加时，中心模型会爆发，粒子从核心向外喷发，名字会被推到最前景，同时右侧记录新增信号。</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      import * as THREE from "./vendor/three.module.min.js";
+
+      const APPS_SCRIPT_URL = "";
+      const API_URL = APPS_SCRIPT_URL || "/api/sheet";
+      const STORAGE_KEY = "sheet-i-column-baseline-hypercore-v2";
+      const LOG_KEY = "sheet-i-column-increase-log-hypercore-v3";
+
+      const state = {
+        running: true,
+        timer: null,
+        baseline: loadJson(STORAGE_KEY, null),
+        events: loadJson(LOG_KEY, []),
+        rows: [],
+        pointer: { x: 0, y: 0 },
+        scroll: 0,
+      };
+
+      if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+      }
+      window.scrollTo(0, 0);
+      [0, 80, 260, 700].forEach((delay) => {
+        window.setTimeout(() => window.scrollTo(0, 0), delay);
+      });
+
+      const els = {
+        signal: document.getElementById("signal"),
+        name: document.getElementById("name"),
+        pay: document.getElementById("pay"),
+        delta: document.getElementById("delta"),
+        floatReward: document.getElementById("floatReward"),
+        intervalInput: document.getElementById("intervalInput"),
+        toggleBtn: document.getElementById("toggleBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        demoBtn: document.getElementById("demoBtn"),
+        liveState: document.getElementById("liveState"),
+        rowCount: document.getElementById("rowCount"),
+        eventCount: document.getElementById("eventCount"),
+        lastCheck: document.getElementById("lastCheck"),
+        iTotal: document.getElementById("iTotal"),
+        fSummary: document.getElementById("fSummary"),
+        feed: document.getElementById("feed"),
+        deck: document.getElementById("deck"),
+      };
+
+      const world = createThreeWorld(document.getElementById("threeCanvas"), state);
+      const particles = createParticleLayer(document.getElementById("particleCanvas"), state);
+
+      window.addEventListener("pointermove", (event) => {
+        state.pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
+        state.pointer.y = (event.clientY / window.innerHeight - 0.5) * 2;
+      });
+
+      window.addEventListener("scroll", () => {
+        state.scroll = window.scrollY / Math.max(1, window.innerHeight);
+        document.querySelectorAll("[data-depth]").forEach((node) => {
+          const depth = Number(node.dataset.depth) || 0.2;
+          node.style.transform = `translateY(${Math.sin(state.scroll * 1.7) * depth * 80}px)`;
+        });
+      });
+
+      els.toggleBtn.addEventListener("click", toggleMonitor);
+      els.resetBtn.addEventListener("click", resetBaseline);
+      els.intervalInput.addEventListener("change", restartTimer);
+      els.demoBtn.addEventListener("click", () => {
+        announce(
+          {
+            displayName: "午夜刀客",
+            persona: "魅惑人设",
+            before: 88,
+            after: 89,
+            rowNumber: "测试",
+          },
+          { persist: false },
+        );
+      });
+
+      renderFeed();
+      renderStats();
+      startTimer();
+      checkSheet();
+
+      function loadJson(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+
+      function saveJson(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      async function checkSheet() {
+        try {
+          const response = await fetch(`${API_URL}?t=${Date.now()}`, {
+            cache: "no-store",
+          });
+          if (!response.ok) throw new Error(`读取失败 ${response.status}`);
+
+          const rows = normalizeRows(parseCsv(await response.text()));
+          const nextBaseline = Object.fromEntries(rows.map((row) => [row.key, row.iNumber]));
+
+          if (!state.baseline) {
+            state.baseline = nextBaseline;
+            saveJson(STORAGE_KEY, state.baseline);
+          } else {
+            rows.forEach((row) => {
+              const before = Number(state.baseline[row.key]);
+              if (Number.isFinite(before) && row.iNumber > before) {
+                announce({ ...row, before, after: row.iNumber });
+              }
+            });
+            state.baseline = nextBaseline;
+            saveJson(STORAGE_KEY, state.baseline);
+          }
+
+          state.rows = rows;
+          els.lastCheck.textContent = formatTime(new Date());
+          setLive("监控中");
+          renderStats();
+          renderFSummary();
+        } catch {
+          setLive("连接中断");
+        }
+      }
+
+      function normalizeRows(csvRows) {
+        return csvRows
+          .slice(2)
+          .map((row, index) => {
+            const rowNumber = index + 3;
+            const groupId = clean(row[3]);
+            const name = clean(row[1]);
+            const persona = clean(row[4]);
+            const operator = clean(row[5]);
+            const displayName = operator || name || groupId || `第${rowNumber}行`;
+            const iRaw = clean(row[8]);
+            const iNumber = numericValue(iRaw);
+            const fanNumber = numericValue(row[10]);
+            const quitNumber = numericValue(row[11]);
+            return {
+              rowNumber,
+              name,
+              groupId,
+              persona,
+              operator,
+              displayName,
+              iRaw,
+              iNumber,
+              fanNumber,
+              quitNumber,
+              key: groupId || `${rowNumber}:${name}:${displayName}`,
+            };
+          })
+          .filter((row) => row.groupId && row.iRaw);
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let cell = "";
+        let quoted = false;
+
+        for (let i = 0; i < text.length; i += 1) {
+          const char = text[i];
+          const next = text[i + 1];
+
+          if (quoted) {
+            if (char === '"' && next === '"') {
+              cell += '"';
+              i += 1;
+            } else if (char === '"') quoted = false;
+            else cell += char;
+            continue;
+          }
+
+          if (char === '"') quoted = true;
+          else if (char === ",") {
+            row.push(cell);
+            cell = "";
+          } else if (char === "\n") {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+          } else if (char !== "\r") cell += char;
+        }
+
+        if (cell.length || row.length) {
+          row.push(cell);
+          rows.push(row);
+        }
+
+        return rows;
+      }
+
+      function announce(event, options = { persist: true }) {
+        const title = event.displayName || event.operator || "未知";
+        const increase = event.after - event.before;
+        const reward = randomReward();
+        const persona = event.persona || "神秘人设";
+        const headline = `${title} ${event.after}`;
+        const actionText = `成功利用「${persona}」，诱惑到 ${increase} 人进小房间进行不可描述的事情。`;
+        const rewardText = `收到了 ${reward} 美金打赏`;
+        const rewardHtml = `收到了 <span class="amount">${reward}</span><span class="unit">美金打赏</span>`;
+        const delta = `I列 ${event.before} → ${event.after}，新增 ${increase}`;
+
+        els.signal.classList.remove("impact");
+        void els.signal.offsetWidth;
+        els.signal.classList.add("impact");
+        els.name.textContent = headline;
+        els.pay.innerHTML = rewardHtml;
+        els.delta.textContent = actionText;
+        showFloatingReward(reward);
+        world.burst(2.15);
+        particles.burst(2.35);
+        beep();
+
+        if (options.persist) {
+          state.events.unshift({
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            time: new Date().toISOString(),
+            operator: headline,
+            actionText,
+            rewardText,
+            delta,
+            rowNumber: event.rowNumber,
+          });
+          state.events = state.events.slice(0, 80);
+          saveJson(LOG_KEY, state.events);
+          renderFeed();
+          renderStats();
+          renderFSummary();
+        }
+      }
+
+      function renderFeed() {
+        if (!state.events.length) {
+          els.feed.innerHTML = `<div class="empty">等待超维信号</div>`;
+          return;
+        }
+
+        els.feed.innerHTML = state.events
+          .map(
+            (event) => `
+              <article class="event">
+                <strong>${escapeHtml(event.operator)}</strong>
+                <b>${escapeHtml(event.rewardText || "收到了神秘美金打赏")}</b>
+                <span>${formatTime(new Date(event.time))} · ${escapeHtml(event.actionText || "成功制造了一次离谱新增。")} · ${escapeHtml(event.delta)} · 第${escapeHtml(event.rowNumber)}行</span>
+              </article>
+            `,
+          )
+          .join("");
+      }
+
+      function renderStats() {
+        els.rowCount.textContent = state.rows.length.toLocaleString("zh-CN");
+        els.eventCount.textContent = state.events.length.toLocaleString("zh-CN");
+        els.iTotal.textContent = state.rows
+          .reduce((sum, row) => sum + row.iNumber, 0)
+          .toLocaleString("zh-CN");
+      }
+
+      function renderFSummary() {
+        if (!state.rows.length) {
+          els.fSummary.innerHTML = `<div class="empty">等待统计数据</div>`;
+          return;
+        }
+
+        const grouped = new Map();
+        for (const row of state.rows) {
+          const key = row.operator || "未填写F列";
+          const item = grouped.get(key) || {
+            name: key,
+            total: 0,
+            fanTotal: 0,
+            quitTotal: 0,
+          };
+          item.total += row.iNumber;
+          item.fanTotal += row.fanNumber;
+          item.quitTotal += row.quitNumber;
+          grouped.set(key, item);
+        }
+
+        const items = Array.from(grouped.values()).sort((a, b) => b.total - a.total);
+        const max = Math.max(1, ...items.map((item) => item.total));
+        els.fSummary.innerHTML = items
+          .map((item) => {
+            const pct = `${Math.max(4, Math.round((item.total / max) * 100))}%`;
+            return `
+              <article class="f-stat">
+                <strong>
+                  <span>${escapeHtml(item.name)}</span>
+                  <b>${item.total.toLocaleString("zh-CN")}</b>
+                </strong>
+                <div class="bar"><i style="--pct:${pct}"></i></div>
+                <span>吸粉率 ${formatPercent(item.fanTotal, item.total)} · 退群率 ${formatPercent(item.quitTotal, item.total)}</span>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function toggleMonitor() {
+        state.running = !state.running;
+        els.toggleBtn.textContent = state.running ? "暂停" : "开始";
+        setLive(state.running ? "监控中" : "已暂停");
+        restartTimer();
+      }
+
+      async function resetBaseline() {
+        state.baseline = null;
+        localStorage.removeItem(STORAGE_KEY);
+        await checkSheet();
+        els.name.textContent = "基准已更新";
+        els.pay.textContent = "统计画面待命中";
+        els.delta.textContent = "之后只提示 D 列和 I 列都有值的新增";
+        world.burst(1.25);
+        particles.burst(1.25);
+      }
+
+      function startTimer() {
+        if (state.timer) clearInterval(state.timer);
+        if (!state.running) return;
+        const seconds = Math.max(1, Number(els.intervalInput.value) || 2);
+        els.intervalInput.value = seconds;
+        state.timer = setInterval(checkSheet, seconds * 1000);
+      }
+
+      function restartTimer() {
+        startTimer();
+      }
+
+      function setLive(text) {
+        els.liveState.textContent = text;
+      }
+
+      function numericValue(value) {
+        const parsed = Number(String(value ?? "").replace(/,/g, "").trim());
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function clean(value) {
+        return String(value ?? "").trim();
+      }
+
+      function formatTime(date) {
+        return date.toLocaleTimeString("zh-CN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function randomReward() {
+        const rewards = [888, 666, 518, 777, 188, 1314, 520];
+        return rewards[Math.floor(Math.random() * rewards.length)];
+      }
+
+      function formatPercent(part, total) {
+        if (!total) return "0.00%";
+        return `${((part / total) * 100).toFixed(2)}%`;
+      }
+
+      function showFloatingReward(reward) {
+        els.floatReward.classList.remove("show");
+        els.floatReward.innerHTML = `
+          <span class="prefix">收到了</span>
+          <span class="amount">${reward}</span>
+          <span class="suffix">美金打赏</span>
+        `;
+        void els.floatReward.offsetWidth;
+        els.floatReward.classList.add("show");
+      }
+
+      function beep() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const gain = ctx.createGain();
+          gain.connect(ctx.destination);
+          gain.gain.setValueAtTime(0.001, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.82);
+          [261.63, 392, 659.25, 1046.5].forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            osc.type = index % 2 ? "triangle" : "sine";
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            osc.start(ctx.currentTime + index * 0.055);
+            osc.stop(ctx.currentTime + 0.78);
+          });
+        } catch {
+          /* Audio can be blocked until a user gesture. */
+        }
+      }
+
+      function createThreeWorld(canvas, sharedState) {
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          alpha: true,
+          antialias: true,
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setClearColor(0x000000, 0);
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050716, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 120);
+        camera.position.set(0, 0.3, 12.5);
+
+        const core = new THREE.Group();
+        core.position.x = -1.25;
+        core.position.y = 0.72;
+        scene.add(core);
+
+        const ambient = new THREE.AmbientLight(0x88ccff, 0.9);
+        scene.add(ambient);
+        const cyanLight = new THREE.PointLight(0x35eaff, 4.8, 28);
+        cyanLight.position.set(-3, 2, 4);
+        scene.add(cyanLight);
+        const goldLight = new THREE.PointLight(0xffd36f, 3.4, 22);
+        goldLight.position.set(4, -2, 3);
+        scene.add(goldLight);
+
+        const nucleus = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(1.18, 4),
+          new THREE.MeshPhysicalMaterial({
+            color: 0x3defff,
+            emissive: 0x0ba9ff,
+            emissiveIntensity: 1.1,
+            roughness: 0.18,
+            metalness: 0.5,
+            transmission: 0.18,
+            thickness: 0.8,
+            transparent: true,
+            opacity: 0.82,
+          }),
+        );
+        nucleus.scale.setScalar(0.92);
+        core.add(nucleus);
+
+        const wire = new THREE.LineSegments(
+          new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(1.45, 3)),
+          new THREE.LineBasicMaterial({
+            color: 0xd8fcff,
+            transparent: true,
+            opacity: 0.82,
+          }),
+        );
+        wire.scale.setScalar(0.95);
+        core.add(wire);
+
+        const axisMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffd36f,
+          emissive: 0xffb84a,
+          emissiveIntensity: 0.8,
+          roughness: 0.18,
+          metalness: 0.72,
+        });
+        const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 4.6, 24), axisMaterial);
+        axis.rotation.z = Math.PI / 2;
+        core.add(axis);
+
+        const ringMaterial = new THREE.MeshStandardMaterial({
+          color: 0x69f5ff,
+          emissive: 0x1cc7ff,
+          emissiveIntensity: 0.7,
+          roughness: 0.2,
+          metalness: 0.65,
+          transparent: true,
+          opacity: 0.72,
+        });
+
+        const rings = [];
+        [
+          [2.25, 0.035, 0, 0.6, 0.25],
+          [3.05, 0.028, 0.95, 0.1, 1.1],
+          [3.9, 0.02, 0.2, 1.25, 0.55],
+        ].forEach(([radius, tube, x, y, z]) => {
+          const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(radius, tube, 18, 180),
+            ringMaterial.clone(),
+          );
+          ring.rotation.set(x, y, z);
+          ring.scale.setScalar(0.82);
+          core.add(ring);
+          rings.push(ring);
+        });
+
+        const plateMaterial = new THREE.MeshStandardMaterial({
+          color: 0x243dff,
+          emissive: 0x385cff,
+          emissiveIntensity: 0.55,
+          roughness: 0.28,
+          metalness: 0.55,
+          transparent: true,
+          opacity: 0.42,
+          side: THREE.DoubleSide,
+        });
+        for (let i = 0; i < 3; i += 1) {
+          const plate = new THREE.Mesh(new THREE.CircleGeometry(1.25 + i * 0.26, 96), plateMaterial.clone());
+          plate.rotation.x = Math.PI / 2 + i * 0.34;
+          plate.rotation.y = i * 0.55;
+          plate.material.opacity = 0.07 - i * 0.012;
+          core.add(plate);
+          rings.push(plate);
+        }
+
+        const shardMaterial = new THREE.MeshStandardMaterial({
+          color: 0xb6fbff,
+          emissive: 0x35eaff,
+          emissiveIntensity: 0.58,
+          roughness: 0.3,
+          metalness: 0.4,
+        });
+        const shards = [];
+        for (let i = 0; i < 42; i += 1) {
+          const shard = new THREE.Mesh(
+            new THREE.TetrahedronGeometry(0.08 + Math.random() * 0.12, 0),
+            shardMaterial,
+          );
+          const angle = (i / 42) * Math.PI * 2;
+          const radius = 2.4 + Math.random() * 2.6;
+          shard.position.set(
+            Math.cos(angle) * radius,
+            (Math.random() - 0.5) * 2.8,
+            Math.sin(angle) * radius,
+          );
+          shard.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+          core.add(shard);
+          shards.push({ mesh: shard, angle, radius, speed: 0.25 + Math.random() * 0.55 });
+        }
+
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 1200;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i += 1) {
+          starPositions[i * 3] = (Math.random() - 0.5) * 60;
+          starPositions[i * 3 + 1] = (Math.random() - 0.5) * 34;
+          starPositions[i * 3 + 2] = -Math.random() * 52;
+        }
+        starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
+        const starField = new THREE.Points(
+          starGeometry,
+          new THREE.PointsMaterial({
+            color: 0x9af8ff,
+            size: 0.035,
+            transparent: true,
+            opacity: 0.8,
+          }),
+        );
+        scene.add(starField);
+
+        const clock = new THREE.Clock();
+        let impulse = 0;
+
+        function resize() {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+        }
+
+        function animate() {
+          const elapsed = clock.getElapsedTime();
+          const scroll = sharedState.scroll;
+          impulse *= 0.93;
+
+          camera.position.x += (sharedState.pointer.x * 0.8 - camera.position.x) * 0.04;
+          camera.position.y += (-sharedState.pointer.y * 0.55 + 0.3 + scroll * 0.36 - camera.position.y) * 0.04;
+          camera.position.z += (12.5 - scroll * 1.55 - camera.position.z) * 0.035;
+          camera.lookAt(0, 0, 0);
+
+          core.rotation.y = elapsed * 0.16 + sharedState.pointer.x * 0.26;
+          core.rotation.x = -0.14 + sharedState.pointer.y * 0.18 + scroll * 0.1;
+          core.scale.setScalar(0.82 + impulse * 0.24);
+
+          nucleus.rotation.x += 0.008 + impulse * 0.015;
+          nucleus.rotation.y += 0.012 + impulse * 0.018;
+          wire.rotation.x -= 0.006 + impulse * 0.014;
+          wire.rotation.y += 0.01 + impulse * 0.016;
+          axis.rotation.x += 0.01;
+          axis.rotation.y += 0.018;
+          nucleus.material.emissiveIntensity = 1.1 + impulse * 3.4 + Math.sin(elapsed * 2.1) * 0.2;
+
+          rings.forEach((ring, index) => {
+            ring.rotation.z += 0.004 * (index + 1) + impulse * 0.012;
+            ring.rotation.x += 0.0018 * (index + 1);
+            ring.material.opacity = 0.52 + Math.sin(elapsed * 1.5 + index) * 0.18 + impulse * 0.25;
+          });
+
+          shards.forEach((item, index) => {
+            const a = item.angle + elapsed * item.speed;
+            const r = item.radius + impulse * (0.8 + index * 0.01);
+            item.mesh.position.x = Math.cos(a) * r;
+            item.mesh.position.z = Math.sin(a) * r;
+            item.mesh.position.y += Math.sin(elapsed * item.speed + index) * 0.002;
+            item.mesh.rotation.x += 0.015;
+            item.mesh.rotation.y += 0.011;
+          });
+
+          starField.rotation.y = elapsed * 0.015 + sharedState.pointer.x * 0.025;
+          starField.position.z = scroll * 4;
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+        }
+
+        window.addEventListener("resize", resize);
+        resize();
+        animate();
+
+        return {
+          burst(power = 1) {
+            impulse = Math.max(impulse, power);
+          },
+        };
+      }
+
+      function createParticleLayer(canvas, sharedState) {
+        const ctx = canvas.getContext("2d");
+        const DPR = Math.min(window.devicePixelRatio || 1, 2);
+        const motes = [];
+        const bursts = [];
+        let w = 0;
+        let h = 0;
+        let tick = 0;
+
+        function resize() {
+          w = Math.floor(window.innerWidth * DPR);
+          h = Math.floor(window.innerHeight * DPR);
+          canvas.width = w;
+          canvas.height = h;
+          canvas.style.width = `${window.innerWidth}px`;
+          canvas.style.height = `${window.innerHeight}px`;
+          seed();
+        }
+
+        function seed() {
+          motes.length = 0;
+          const count = Math.floor(Math.min(900, Math.max(480, (w * h) / (DPR * DPR * 4200))));
+          for (let i = 0; i < count; i += 1) {
+            motes.push({
+              x: Math.random() * w,
+              y: Math.random() * h,
+              vx: (Math.random() - 0.5) * 0.65 * DPR,
+              vy: (Math.random() - 0.5) * 0.65 * DPR,
+              r: (0.55 + Math.random() * 1.8) * DPR,
+              hue: Math.random() > 0.72 ? 44 : Math.random() > 0.35 ? 186 : 248,
+              phase: Math.random() * Math.PI * 2,
+            });
+          }
+        }
+
+        function draw() {
+          tick += 0.012;
+          ctx.clearRect(0, 0, w, h);
+          ctx.globalCompositeOperation = "lighter";
+
+          const cx = w * (0.44 + sharedState.pointer.x * 0.02);
+          const cy = h * (0.52 + sharedState.pointer.y * 0.025 - sharedState.scroll * 0.035);
+
+          for (const p of motes) {
+            const dx = p.x - cx;
+            const dy = p.y - cy;
+            const d = Math.max(1, Math.hypot(dx, dy));
+            const swirl = 0.018 * DPR;
+            p.vx += (-dy / d) * swirl + sharedState.pointer.x * 0.006;
+            p.vy += (dx / d) * swirl + sharedState.pointer.y * 0.006;
+            p.vx *= 0.988;
+            p.vy *= 0.988;
+            p.x += p.vx;
+            p.y += p.vy + sharedState.scroll * 0.04;
+
+            if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40) {
+              p.x = Math.random() * w;
+              p.y = Math.random() * h;
+              p.vx *= 0.2;
+              p.vy *= 0.2;
+            }
+
+            const alpha = 0.18 + Math.sin(tick * 4 + p.phase) * 0.1 + Math.min(0.42, 220 / d);
+            ctx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          for (let i = bursts.length - 1; i >= 0; i -= 1) {
+            const b = bursts[i];
+            b.life -= 1;
+            b.x += b.vx;
+            b.y += b.vy;
+            b.vx *= 0.985;
+            b.vy *= 0.985;
+            const a = Math.max(0, b.life / b.maxLife);
+            ctx.fillStyle = `hsla(${b.hue}, 100%, 68%, ${a})`;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r * a, 0, Math.PI * 2);
+            ctx.fill();
+            if (b.life <= 0) bursts.splice(i, 1);
+          }
+
+          requestAnimationFrame(draw);
+        }
+
+        window.addEventListener("resize", resize);
+        resize();
+        draw();
+
+        return {
+          burst(power = 1) {
+            const cx = w * 0.44;
+            const cy = h * 0.52;
+            const count = Math.floor(280 * power);
+            for (let i = 0; i < count; i += 1) {
+              const angle = Math.random() * Math.PI * 2;
+              const speed = (2.2 + Math.random() * 9.4 * power) * DPR;
+              bursts.push({
+                x: cx + Math.cos(angle) * Math.random() * 52 * DPR,
+                y: cy + Math.sin(angle) * Math.random() * 52 * DPR,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                r: (1.2 + Math.random() * 5.2 * power) * DPR,
+                life: 54 + Math.random() * 44 * power,
+                maxLife: 98 * power,
+                hue: Math.random() > 0.52 ? 44 : Math.random() > 0.5 ? 184 : 286,
+              });
+            }
+          },
+        };
+      }
+    </script>
+  </body>
+</html>
