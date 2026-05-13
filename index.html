@@ -889,6 +889,8 @@
         baseline: loadJson(STORAGE_KEY, null),
         events: loadJson(LOG_KEY, []),
         rows: [],
+        openFStats: loadJson("sheet-open-f-stats-v1", []),
+        renderingFSummary: false,
         pointer: { x: 0, y: 0 },
         scroll: 0,
       };
@@ -1177,9 +1179,13 @@
 
         const items = Array.from(grouped.values()).sort((a, b) => b.total - a.total);
         const max = Math.max(1, ...items.map((item) => item.total));
+        const openSet = new Set(state.openFStats);
+        state.renderingFSummary = true;
         els.fSummary.innerHTML = items
           .map((item) => {
             const pct = `${Math.max(4, Math.round((item.total / max) * 100))}%`;
+            const itemKey = encodeURIComponent(item.name);
+            const isOpen = openSet.has(item.name) ? " open" : "";
             const eRows = Array.from(item.eGroups.values())
               .sort((a, b) => b.total - a.total)
               .map(
@@ -1193,7 +1199,7 @@
               )
               .join("");
             return `
-              <details class="f-stat">
+              <details class="f-stat" data-f-key="${escapeHtml(itemKey)}"${isOpen}>
                 <summary>
                   <strong>
                     <span>${escapeHtml(item.name)}</span>
@@ -1209,6 +1215,26 @@
             `;
           })
           .join("");
+        bindFSummaryToggles();
+        requestAnimationFrame(() => {
+          state.renderingFSummary = false;
+        });
+      }
+
+      function bindFSummaryToggles() {
+        els.fSummary.querySelectorAll(".f-stat").forEach((node) => {
+          node.addEventListener("toggle", () => {
+            if (state.renderingFSummary) return;
+            const rawKey = node.dataset.fKey;
+            if (!rawKey) return;
+            const name = decodeURIComponent(rawKey);
+            const openSet = new Set(state.openFStats);
+            if (node.open) openSet.add(name);
+            else openSet.delete(name);
+            state.openFStats = Array.from(openSet);
+            saveJson("sheet-open-f-stats-v1", state.openFStats);
+          });
+        });
       }
 
       function toggleMonitor() {
