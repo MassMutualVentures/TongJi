@@ -429,6 +429,19 @@
         font-size: 23px;
       }
 
+      .compact-stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .compact-stats .stat {
+        min-height: 70px;
+      }
+
+      .compact-stats .wide-stat {
+        grid-column: 1 / -1;
+        min-height: 64px;
+      }
+
       .feed {
         padding: 14px;
         overflow: hidden;
@@ -888,10 +901,20 @@
               <strong>屠龙榜</strong>
               <span id="liveState" class="live">监控中</span>
             </div>
+            <div class="stats compact-stats">
+              <div class="stat">
+                <span>登记总打粉</span>
+                <b id="iTotal">0</b>
+              </div>
+              <div class="stat wide-stat">
+                <span>最近检查</span>
+                <b id="lastCheck">-</b>
+              </div>
+            </div>
           </div>
           <div class="feed">
             <section class="feed-section">
-              <h3 class="section-title"></h3>
+              <h3 class="section-title">F列 I值汇总</h3>
               <div id="fSummary">
                 <div class="empty">等待统计数据</div>
               </div>
@@ -938,6 +961,9 @@
         resetBtn: document.getElementById("resetBtn"),
         demoBtn: document.getElementById("demoBtn"),
         liveState: document.getElementById("liveState"),
+        rowCount: document.getElementById("rowCount"),
+        iTotal: document.getElementById("iTotal"),
+        lastCheck: document.getElementById("lastCheck"),
         fSummary: document.getElementById("fSummary"),
         deck: document.getElementById("deck"),
       };
@@ -977,6 +1003,7 @@
 
       startTimer();
       checkSheet();
+      renderStats();
       renderFSummary();
 
       function loadJson(key, fallback) {
@@ -1018,6 +1045,7 @@
 
           state.rows = rows;
           setLive("监控中");
+          renderStats();
           renderFSummary();
         } catch {
           setLive("连接中断");
@@ -1115,6 +1143,14 @@
         world.burst(2.15);
         particles.burst(2.35);
         beep();
+      }
+
+      function renderStats() {
+        els.rowCount.textContent = state.rows.length.toLocaleString("zh-CN");
+        els.iTotal.textContent = state.rows
+          .reduce((sum, row) => sum + row.iNumber, 0)
+          .toLocaleString("zh-CN");
+        els.lastCheck.textContent = formatTime(new Date());
       }
 
       function renderFSummary() {
@@ -1254,6 +1290,14 @@
 
       function clean(value) {
         return String(value ?? "").trim();
+      }
+
+      function formatTime(date) {
+        return date.toLocaleTimeString("zh-CN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
       }
 
       function escapeHtml(value) {
