@@ -87,34 +87,7 @@
       }
 
       .float-reward {
-        position: fixed;
-        left: 50%;
-        top: 18%;
-        z-index: 12;
-        display: flex;
-        align-items: baseline;
-        gap: 14px;
-        max-width: min(88vw, 1120px);
-        padding: 18px 26px;
-        border: 1px solid rgba(255, 211, 111, 0.34);
-        border-radius: 24px;
-        background:
-          radial-gradient(circle at 18% 20%, rgba(255, 211, 111, 0.26), transparent 38%),
-          linear-gradient(90deg, rgba(7, 8, 20, 0.94), rgba(29, 14, 34, 0.82));
-        color: var(--gold);
-        font-weight: 950;
-        line-height: 0.92;
-        white-space: nowrap;
-        pointer-events: none;
-        opacity: 0;
-        transform: translate3d(62vw, -42px, 0) rotate(4deg) scale(0.84);
-        text-shadow:
-          0 0 14px rgba(255, 211, 111, 0.8),
-          0 0 46px rgba(255, 211, 111, 0.44),
-          0 0 90px rgba(181, 92, 255, 0.32);
-        box-shadow:
-          0 22px 70px rgba(0, 0, 0, 0.36),
-          inset 0 0 34px rgba(255, 211, 111, 0.08);
+        display: none;
       }
 
       .float-reward.show {
@@ -266,34 +239,69 @@
       }
 
       .signal {
-        position: fixed;
-        left: 56px;
-        bottom: 42px;
+        position: absolute;
+        left: clamp(24px, 6vw, 78px);
+        top: clamp(150px, 24vh, 250px);
         z-index: 8;
-        width: min(760px, calc(100vw - 480px));
+        width: min(760px, calc(100vw - 500px));
         display: grid;
         justify-items: start;
-        gap: 12px;
+        gap: 14px;
         text-align: left;
         transform-style: preserve-3d;
-        padding: 18px 20px;
-        border: 1px solid rgba(53, 234, 255, 0.16);
-        border-radius: 20px;
-        background: linear-gradient(90deg, rgba(2, 7, 18, 0.94), rgba(2, 7, 18, 0.72));
+        padding: clamp(22px, 3vw, 42px) clamp(22px, 4vw, 52px);
+        border: 1px solid rgba(53, 234, 255, 0.2);
+        border-radius: 28px;
+        background:
+          radial-gradient(circle at 12% 24%, rgba(53, 234, 255, 0.18), transparent 28%),
+          radial-gradient(circle at 82% 28%, rgba(255, 211, 111, 0.13), transparent 34%),
+          linear-gradient(100deg, rgba(2, 7, 18, 0.96), rgba(2, 7, 18, 0.82));
         box-shadow:
-          0 18px 46px rgba(0, 0, 0, 0.32),
-          inset 0 0 34px rgba(53, 234, 255, 0.04);
-        animation: floatHud 4.6s ease-in-out infinite;
+          0 24px 70px rgba(0, 0, 0, 0.42),
+          inset 0 0 44px rgba(53, 234, 255, 0.055),
+          0 0 52px rgba(53, 234, 255, 0.08);
+        animation: meteorDrift 7.4s ease-in-out infinite;
+      }
+
+      .signal::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        pointer-events: none;
+        background:
+          linear-gradient(90deg, rgba(53, 234, 255, 0.58), transparent 22%),
+          linear-gradient(180deg, rgba(255, 211, 111, 0.32), transparent 38%);
+        opacity: 0.26;
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        -webkit-mask-composite: xor;
+        padding: 1px;
+      }
+
+      .signal::after {
+        content: "";
+        position: absolute;
+        left: -170px;
+        top: 18%;
+        width: 190px;
+        height: 64%;
+        pointer-events: none;
+        background: linear-gradient(90deg, transparent, rgba(53, 234, 255, 0.18), rgba(255, 211, 111, 0.22));
+        filter: blur(12px);
+        opacity: 0.72;
+        transform: skewX(-18deg);
       }
 
       .kicker {
-        color: var(--muted);
-        font-size: 13px;
-        letter-spacing: 0.32em;
+        display: none;
       }
 
       .name {
-        font-size: clamp(52px, 7.2vw, 112px);
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        font-size: clamp(64px, 8vw, 128px);
         font-weight: 950;
         line-height: 0.9;
         letter-spacing: 0;
@@ -304,13 +312,18 @@
         animation: floatName 4.2s ease-in-out infinite;
       }
 
+      .name.long {
+        font-size: clamp(38px, 5vw, 78px);
+        line-height: 1.02;
+      }
+
       .pay {
         display: flex;
         align-items: baseline;
         gap: 12px;
         flex-wrap: wrap;
         color: var(--gold);
-        font-size: clamp(28px, 3.6vw, 54px);
+        font-size: clamp(34px, 4.4vw, 68px);
         font-weight: 900;
         line-height: 0.95;
         text-shadow:
@@ -320,17 +333,17 @@
       }
 
       .pay .amount {
-        font-size: clamp(34px, 4.4vw, 68px);
+        font-size: clamp(42px, 5.4vw, 82px);
       }
 
       .pay .unit {
-        font-size: clamp(34px, 4.4vw, 68px);
+        font-size: clamp(42px, 5.4vw, 82px);
       }
 
       .delta {
         color: var(--green);
         min-height: 28px;
-        font-size: clamp(18px, 2vw, 28px);
+        font-size: clamp(22px, 2.4vw, 34px);
         line-height: 1.35;
         text-shadow: 0 0 18px rgba(45, 255, 178, 0.52);
       }
@@ -420,7 +433,7 @@
         padding: 14px;
         overflow: hidden;
         display: grid;
-        grid-template-rows: 190px minmax(260px, 1fr) 240px;
+        grid-template-rows: minmax(0, 1fr);
         gap: 12px;
         min-height: 0;
       }
@@ -725,6 +738,22 @@
         }
       }
 
+      @keyframes meteorDrift {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0) rotate(-0.8deg);
+        }
+        25% {
+          transform: translate3d(18px, -9px, 0) rotate(0.7deg);
+        }
+        50% {
+          transform: translate3d(34px, 8px, 0) rotate(-0.25deg);
+        }
+        75% {
+          transform: translate3d(14px, 13px, 0) rotate(0.9deg);
+        }
+      }
+
       @keyframes floatName {
         0%,
         100% {
@@ -856,51 +885,20 @@
         <aside class="side">
           <div class="side-head">
             <div class="side-title">
-              <strong>新增信号</strong>
+              <strong>屠龙榜</strong>
               <span id="liveState" class="live">监控中</span>
-            </div>
-            <div class="stats">
-              <div class="stat">
-                <span>监控行数</span>
-                <b id="rowCount">0</b>
-              </div>
-              <div class="stat">
-                <span>记录数</span>
-                <b id="eventCount">0</b>
-              </div>
-              <div class="stat">
-                <span>最近检查</span>
-                <b id="lastCheck">-</b>
-              </div>
-              <div class="stat">
-                <span>总打粉</span>
-                <b id="iTotal">0</b>
-              </div>
             </div>
           </div>
           <div class="feed">
-            <section class="feed-section bonus-section">
-              <h3 class="section-title">奖金累计</h3>
-              <div id="bonusBoard">
-                <div class="empty">等待打赏入账</div>
-              </div>
-            </section>
             <section class="feed-section">
-              <h3 class="section-title">屠龙榜</h3>
+              <h3 class="section-title"></h3>
               <div id="fSummary">
                 <div class="empty">等待统计数据</div>
-              </div>
-            </section>
-            <section class="feed-section">
-              <h3 class="section-title">新增信号</h3>
-              <div id="feed">
-                <div class="empty">等待超维信号</div>
               </div>
             </section>
           </div>
         </aside>
       </section>
-
     </main>
 
     <script type="module">
@@ -909,16 +907,11 @@
       const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwafVYIWMZO3otoNZ02VGvpHX4KrUUMxk-UXruLeYVDPg3ICMWUx37buSASqbGcZUI-tQ/exec";
       const API_URL = APPS_SCRIPT_URL || "/api/sheet";
       const STORAGE_KEY = "sheet-i-column-baseline-hypercore-v2";
-      const LOG_KEY = "sheet-i-column-increase-log-hypercore-v3";
-      const LOG_DAY_KEY = "sheet-i-column-increase-log-day-v1";
-      const BONUS_KEY = "sheet-bonus-totals-by-f-v1";
 
       const state = {
         running: true,
         timer: null,
         baseline: loadJson(STORAGE_KEY, null),
-        events: loadJson(LOG_KEY, []),
-        bonusTotals: loadJson(BONUS_KEY, {}),
         rows: [],
         openFStats: loadJson("sheet-open-f-stats-v1", []),
         renderingFSummary: false,
@@ -945,21 +938,12 @@
         resetBtn: document.getElementById("resetBtn"),
         demoBtn: document.getElementById("demoBtn"),
         liveState: document.getElementById("liveState"),
-        rowCount: document.getElementById("rowCount"),
-        eventCount: document.getElementById("eventCount"),
-        lastCheck: document.getElementById("lastCheck"),
-        iTotal: document.getElementById("iTotal"),
-        bonusBoard: document.getElementById("bonusBoard"),
         fSummary: document.getElementById("fSummary"),
-        feed: document.getElementById("feed"),
         deck: document.getElementById("deck"),
       };
 
       const world = createThreeWorld(document.getElementById("threeCanvas"), state);
       const particles = createParticleLayer(document.getElementById("particleCanvas"), state);
-
-      resetDailyLogsIfNeeded();
-      scheduleMidnightReset();
 
       window.addEventListener("pointermove", (event) => {
         state.pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
@@ -991,11 +975,9 @@
         );
       });
 
-      renderFeed();
-      renderStats();
-      renderBonusBoard();
       startTimer();
       checkSheet();
+      renderFSummary();
 
       function loadJson(key, fallback) {
         try {
@@ -1035,9 +1017,7 @@
           }
 
           state.rows = rows;
-          els.lastCheck.textContent = formatTime(new Date());
           setLive("监控中");
-          renderStats();
           renderFSummary();
         } catch {
           setLive("连接中断");
@@ -1053,7 +1033,7 @@
             const name = clean(row[1]);
             const persona = clean(row[4]);
             const operator = clean(row[5]);
-            const displayName = operator || name || groupId || `第${rowNumber}行`;
+            const displayName = name || groupId || operator || `第${rowNumber}行`;
             const iRaw = clean(row[8]);
             const iNumber = numericValue(iRaw);
             const fanNumber = numericValue(row[10]);
@@ -1115,142 +1095,26 @@
       }
 
       function announce(event, options = { persist: true }) {
-        const title = event.operator || "未填写F列";
-        const bonusName = title;
+        const title = event.name || event.groupId || `第${event.rowNumber}行`;
         const increase = event.after - event.before;
         const reward = randomReward();
+        const operator = event.operator || "未填写F列";
         const persona = event.persona || "神秘人设";
         const headline = `${title} ${event.after}`;
-        const actionText = `成功利用「${persona}」，诱惑到 ${increase} 人进小房间进行不可描述的事情。`;
-        const groupText = event.name ? `群名：${event.name}` : "";
-        const rewardText = `收到了 ${reward} 美金打赏`;
+        const actionText = `${operator} 成功利用「${persona}」诱惑到 ${increase} 人进入房间，进行不可描述的事情。`;
         const rewardHtml = `收到了 <span class="amount">${reward}</span><span class="unit">美金打赏</span>`;
-        const delta = `I列 ${event.before} → ${event.after}，新增 ${increase}`;
 
         els.signal.classList.remove("impact");
         void els.signal.offsetWidth;
         els.signal.classList.add("impact");
+        window.setTimeout(() => els.signal.classList.remove("impact"), 1000);
+        els.name.classList.toggle("long", headline.length > 8);
         els.name.textContent = headline;
         els.pay.innerHTML = rewardHtml;
         els.delta.textContent = actionText;
-        showFloatingReward(reward);
         world.burst(2.15);
         particles.burst(2.35);
         beep();
-
-        if (options.persist) {
-          addBonus(bonusName, reward);
-          state.events.unshift({
-            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-            time: new Date().toISOString(),
-            operator: headline,
-            actionText,
-            groupText,
-            rewardText,
-            delta,
-            rowNumber: event.rowNumber,
-          });
-          state.events = state.events.slice(0, 80);
-          localStorage.setItem(LOG_DAY_KEY, todayKey());
-          saveJson(LOG_KEY, state.events);
-          renderFeed();
-          renderStats();
-          renderFSummary();
-          renderBonusBoard();
-        }
-      }
-
-      function renderFeed() {
-        if (!state.events.length) {
-          els.feed.innerHTML = `<div class="empty">等待超维信号</div>`;
-          return;
-        }
-
-        els.feed.innerHTML = state.events
-          .map(
-            (event) => `
-              <article class="event">
-                <strong>${escapeHtml(event.operator)}</strong>
-                <b>${escapeHtml(event.rewardText || "收到了神秘美金打赏")}</b>
-                <span>${formatTime(new Date(event.time))} · ${escapeHtml(event.actionText || "成功制造了一次离谱新增。")} · ${escapeHtml(event.groupText || "")} · ${escapeHtml(event.delta)} · 第${escapeHtml(event.rowNumber)}行</span>
-              </article>
-            `,
-          )
-          .join("");
-      }
-
-      function renderStats() {
-        resetDailyLogsIfNeeded();
-        els.rowCount.textContent = state.rows.length.toLocaleString("zh-CN");
-        els.eventCount.textContent = state.events.length.toLocaleString("zh-CN");
-        els.iTotal.textContent = state.rows
-          .reduce((sum, row) => sum + row.iNumber, 0)
-          .toLocaleString("zh-CN");
-      }
-
-      function addBonus(name, reward) {
-        const current = state.bonusTotals[name] || { total: 0, count: 0 };
-        current.total += reward;
-        current.count += 1;
-        state.bonusTotals[name] = current;
-        saveJson(BONUS_KEY, state.bonusTotals);
-      }
-
-      function resetDailyLogsIfNeeded() {
-        const today = todayKey();
-        const savedDay = localStorage.getItem(LOG_DAY_KEY);
-        if (savedDay === today) return;
-        state.events = [];
-        saveJson(LOG_KEY, state.events);
-        localStorage.setItem(LOG_DAY_KEY, today);
-      }
-
-      function scheduleMidnightReset() {
-        const now = new Date();
-        const next = new Date(now);
-        next.setHours(24, 0, 0, 0);
-        window.setTimeout(() => {
-          resetDailyLogsIfNeeded();
-          renderFeed();
-          renderStats();
-          scheduleMidnightReset();
-        }, Math.max(1000, next.getTime() - now.getTime()));
-      }
-
-      function todayKey() {
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      }
-
-      function renderBonusBoard() {
-        const items = Object.entries(state.bonusTotals)
-          .map(([name, value]) => ({
-            name,
-            total: Number(value?.total || 0),
-            count: Number(value?.count || 0),
-          }))
-          .filter((item) => item.total > 0)
-          .sort((a, b) => b.total - a.total);
-
-        if (!items.length) {
-          els.bonusBoard.innerHTML = `<div class="empty">等待打赏入账</div>`;
-          return;
-        }
-
-        els.bonusBoard.innerHTML = items
-          .map(
-            (item) => `
-              <article class="bonus-row">
-                <strong>${escapeHtml(item.name)}</strong>
-                <b>${item.total.toLocaleString("zh-CN")}</b>
-                <span>${item.count.toLocaleString("zh-CN")} 次打赏 · 美金累计</span>
-              </article>
-            `,
-          )
-          .join("");
       }
 
       function renderFSummary() {
@@ -1272,6 +1136,7 @@
           item.total += row.iNumber;
           item.fanTotal += row.fanNumber;
           item.quitTotal += row.quitNumber;
+
           const eKey = row.persona || "未填写E列";
           const eItem = item.eGroups.get(eKey) || {
             name: eKey,
@@ -1307,6 +1172,7 @@
                 `,
               )
               .join("");
+
             return `
               <details class="f-stat" data-f-key="${escapeHtml(itemKey)}"${isOpen}>
                 <summary>
@@ -1377,6 +1243,7 @@
       }
 
       function setLive(text) {
+        document.title = `kuku发财~ · ${text}`;
         els.liveState.textContent = text;
       }
 
@@ -1387,14 +1254,6 @@
 
       function clean(value) {
         return String(value ?? "").trim();
-      }
-
-      function formatTime(date) {
-        return date.toLocaleTimeString("zh-CN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
       }
 
       function escapeHtml(value) {
@@ -1414,17 +1273,6 @@
       function formatPercent(part, total) {
         if (!total) return "0.00%";
         return `${((part / total) * 100).toFixed(2)}%`;
-      }
-
-      function showFloatingReward(reward) {
-        els.floatReward.classList.remove("show");
-        els.floatReward.innerHTML = `
-          <span class="prefix">收到了</span>
-          <span class="amount">${reward}</span>
-          <span class="suffix">美金打赏</span>
-        `;
-        void els.floatReward.offsetWidth;
-        els.floatReward.classList.add("show");
       }
 
       function beep() {
@@ -1464,7 +1312,7 @@
         camera.position.set(0, 0.3, 12.5);
 
         const core = new THREE.Group();
-        core.position.x = -1.25;
+        core.position.x = 2.15;
         core.position.y = 0.72;
         scene.add(core);
 
