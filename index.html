@@ -446,8 +446,26 @@
         margin-bottom: 10px;
         border: 1px solid rgba(53, 234, 255, 0.18);
         border-radius: 14px;
-        padding: 11px 12px;
         background: rgba(255, 255, 255, 0.04);
+        overflow: hidden;
+      }
+
+      .f-stat[open] {
+        border-color: rgba(53, 234, 255, 0.42);
+        background:
+          radial-gradient(circle at 0 0, rgba(53, 234, 255, 0.12), transparent 42%),
+          rgba(255, 255, 255, 0.055);
+      }
+
+      .f-stat summary {
+        display: block;
+        padding: 11px 12px;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .f-stat summary::-webkit-details-marker {
+        display: none;
       }
 
       .f-stat strong {
@@ -483,6 +501,57 @@
       .f-stat span {
         display: block;
         margin-top: 7px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .f-stat .hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--cyan);
+      }
+
+      .f-stat .hint::before {
+        content: "点击展开";
+      }
+
+      .f-stat[open] .hint::before {
+        content: "点击收起";
+      }
+
+      .e-detail {
+        border-top: 1px solid rgba(53, 234, 255, 0.14);
+        padding: 8px 12px 12px;
+      }
+
+      .e-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 7px 10px;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .e-row:last-child {
+        border-bottom: 0;
+      }
+
+      .e-name {
+        min-width: 0;
+        color: var(--ink);
+        font-size: 14px;
+        overflow-wrap: anywhere;
+      }
+
+      .e-total {
+        color: var(--gold);
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .e-rate {
+        grid-column: 1 / -1;
         color: var(--muted);
         font-size: 12px;
       }
@@ -1087,10 +1156,22 @@
             total: 0,
             fanTotal: 0,
             quitTotal: 0,
+            eGroups: new Map(),
           };
           item.total += row.iNumber;
           item.fanTotal += row.fanNumber;
           item.quitTotal += row.quitNumber;
+          const eKey = row.persona || "未填写E列";
+          const eItem = item.eGroups.get(eKey) || {
+            name: eKey,
+            total: 0,
+            fanTotal: 0,
+            quitTotal: 0,
+          };
+          eItem.total += row.iNumber;
+          eItem.fanTotal += row.fanNumber;
+          eItem.quitTotal += row.quitNumber;
+          item.eGroups.set(eKey, eItem);
           grouped.set(key, item);
         }
 
@@ -1099,15 +1180,32 @@
         els.fSummary.innerHTML = items
           .map((item) => {
             const pct = `${Math.max(4, Math.round((item.total / max) * 100))}%`;
+            const eRows = Array.from(item.eGroups.values())
+              .sort((a, b) => b.total - a.total)
+              .map(
+                (eItem) => `
+                  <div class="e-row">
+                    <div class="e-name">${escapeHtml(eItem.name)}</div>
+                    <div class="e-total">${eItem.total.toLocaleString("zh-CN")}</div>
+                    <div class="e-rate">吸粉率 ${formatPercent(eItem.fanTotal, eItem.total)} · 退群率 ${formatPercent(eItem.quitTotal, eItem.total)}</div>
+                  </div>
+                `,
+              )
+              .join("");
             return `
-              <article class="f-stat">
-                <strong>
-                  <span>${escapeHtml(item.name)}</span>
-                  <b>${item.total.toLocaleString("zh-CN")}</b>
-                </strong>
-                <div class="bar"><i style="--pct:${pct}"></i></div>
-                <span>吸粉率 ${formatPercent(item.fanTotal, item.total)} · 退群率 ${formatPercent(item.quitTotal, item.total)}</span>
-              </article>
+              <details class="f-stat">
+                <summary>
+                  <strong>
+                    <span>${escapeHtml(item.name)}</span>
+                    <b>${item.total.toLocaleString("zh-CN")}</b>
+                  </strong>
+                  <div class="bar"><i style="--pct:${pct}"></i></div>
+                  <span>吸粉率 ${formatPercent(item.fanTotal, item.total)} · 退群率 ${formatPercent(item.quitTotal, item.total)} · <em class="hint"></em></span>
+                </summary>
+                <div class="e-detail">
+                  ${eRows}
+                </div>
+              </details>
             `;
           })
           .join("");
